@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from news_fetcher import fetch_news
 from data_processor import process_news_data
 from visualizations import create_trend_chart, create_source_breakdown
+import pytz
 
 # Page config
 st.set_page_config(
@@ -34,14 +35,14 @@ days = range_map[time_range]
 # Fetch and process data
 @st.cache_data(ttl=3600)  # Cache for 1 hour
 def get_processed_data(days):
-    end_date = datetime.now()
+    end_date = datetime.now(pytz.UTC)
     start_date = end_date - timedelta(days=days)
     news_data = fetch_news(start_date, end_date)
     return process_news_data(news_data)
 
 try:
     df = get_processed_data(days)
-    
+
     # Display metrics
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -49,7 +50,8 @@ try:
     with col2:
         st.metric("Unique Sources", df['source'].nunique())
     with col3:
-        recent_mentions = len(df[df['published_at'] >= datetime.now() - timedelta(hours=1)])
+        recent_cutoff = datetime.now(pytz.UTC) - timedelta(hours=1)
+        recent_mentions = len(df[df['published_at'] >= recent_cutoff])
         st.metric("Mentions in Last Hour", recent_mentions)
 
     # Trend chart
