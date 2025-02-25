@@ -6,7 +6,7 @@ import traceback
 
 def process_news_data(articles: List[Dict]) -> pd.DataFrame:
     """
-    Process raw news data into a pandas DataFrame
+    Process raw news data into a pandas DataFrame with proper timezone handling
     """
     try:
         if not articles:
@@ -16,51 +16,51 @@ def process_news_data(articles: List[Dict]) -> pd.DataFrame:
         # Create DataFrame
         df = pd.DataFrame(articles)
         print(f"Raw DataFrame columns: {df.columns.tolist()}")
-        print(f"Raw data first row: {df.iloc[0].to_dict() if not df.empty else 'Empty DataFrame'}")
 
-        # Clean and transform data
-        if 'publishedAt' not in df.columns:
-            print("Error: 'publishedAt' column not found")
+        # Verify required columns
+        required_columns = {'publishedAt', 'source', 'title', 'description', 'url'}
+        missing_columns = required_columns - set(df.columns)
+        if missing_columns:
+            print(f"Missing required columns: {missing_columns}")
             return pd.DataFrame()
 
-        # Convert timestamps
+        # Handle timestamps
         try:
+            # Convert to datetime and ensure UTC timezone
             df['published_at'] = pd.to_datetime(df['publishedAt'])
+            # Add UTC timezone if not present
             if df['published_at'].dt.tz is None:
                 df['published_at'] = df['published_at'].dt.tz_localize('UTC')
+            else:
+                # Convert to UTC if in a different timezone
+                df['published_at'] = df['published_at'].dt.tz_convert('UTC')
         except Exception as e:
-            print(f"Error converting timestamps: {e}")
+            print(f"Error processing timestamps: {str(e)}")
             return pd.DataFrame()
 
-        # Extract source names
+        # Process source field
         try:
             df['source'] = df['source'].apply(
                 lambda x: x.get('name', str(x)) if isinstance(x, dict) else str(x)
             )
         except Exception as e:
-            print(f"Error extracting source names: {e}")
+            print(f"Error processing source field: {str(e)}")
             return pd.DataFrame()
 
         # Select and rename columns
-        try:
-            required_cols = ['title', 'description', 'source', 'published_at', 'url']
-            missing_cols = [col for col in required_cols if col not in df.columns]
-            if missing_cols:
-                print(f"Missing columns: {missing_cols}")
-                return pd.DataFrame()
+        df = df[[
+            'title',
+            'description',
+            'source',
+            'published_at',
+            'url'
+        ]]
 
-            df = df[required_cols]
-        except Exception as e:
-            print(f"Error selecting columns: {e}")
-            return pd.DataFrame()
-
-        # Sort and deduplicate
+        # Sort by publication date and remove duplicates
         df = df.sort_values('published_at', ascending=False)
         df = df.drop_duplicates(subset=['title', 'source'])
 
-        print(f"Processed DataFrame shape: {df.shape}")
-        print(f"Processed data first row: {df.iloc[0].to_dict() if not df.empty else 'Empty DataFrame'}")
-
+        print(f"Successfully processed {len(df)} articles")
         return df
 
     except Exception as e:
