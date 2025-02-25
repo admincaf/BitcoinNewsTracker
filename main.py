@@ -71,6 +71,10 @@ try:
         df = get_processed_data(days)
 
     if not df.empty:
+        # Verify timezone awareness
+        if df['published_at'].dt.tz is None:
+            df['published_at'] = df['published_at'].dt.tz_localize('UTC')
+
         # Display metrics
         col1, col2, col3 = st.columns(3)
 
@@ -81,11 +85,17 @@ try:
             st.metric("Unique Sources", df['source'].nunique())
 
         with col3:
-            # Ensure timezone-aware comparison
-            current_time = datetime.now(pytz.UTC)
-            one_hour_ago = current_time - timedelta(hours=1)
-            recent_mentions = len(df[df['published_at'] >= one_hour_ago])
-            st.metric("Mentions in Last Hour", recent_mentions)
+            try:
+                # Get current time in UTC
+                current_time = pd.Timestamp.now(tz='UTC')
+                one_hour_ago = current_time - pd.Timedelta(hours=1)
+
+                # Filter recent mentions using pandas Timestamp
+                recent_mentions = len(df[df['published_at'] >= one_hour_ago])
+                st.metric("Mentions in Last Hour", recent_mentions)
+            except Exception as e:
+                print(f"Error calculating recent mentions: {str(e)}")
+                st.metric("Mentions in Last Hour", "N/A")
 
         # Trend chart
         st.subheader("📈 Bitcoin Mention Trends")
