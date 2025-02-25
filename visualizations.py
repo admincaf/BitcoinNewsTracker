@@ -8,12 +8,14 @@ def create_trend_chart(df: pd.DataFrame) -> go.Figure:
     Create a line chart showing Bitcoin mentions over time
     """
     try:
-        # Convert to timezone-naive for resampling
+        # Convert to UTC for consistent timezone handling
         df_copy = df.copy()
-        df_copy.index = df_copy['published_at'].dt.tz_localize(None)
+        df_copy['published_at'] = df_copy['published_at'].dt.tz_convert('UTC')
 
         # Resample data by hour
-        mentions_by_time = df_copy.resample('H', on='published_at').size().reset_index()
+        mentions_by_time = df_copy.groupby(
+            pd.Grouper(key='published_at', freq='H')
+        ).size().reset_index()
         mentions_by_time.columns = ['timestamp', 'mentions']
 
         fig = px.line(
@@ -24,7 +26,7 @@ def create_trend_chart(df: pd.DataFrame) -> go.Figure:
         )
 
         fig.update_layout(
-            xaxis_title="Time",
+            xaxis_title="Time (UTC)",
             yaxis_title="Number of Mentions",
             hovermode='x unified',
             showlegend=False

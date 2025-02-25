@@ -14,7 +14,7 @@ def process_news_data(articles: List[Dict]) -> pd.DataFrame:
     df = pd.DataFrame(articles)
 
     # Clean and transform data
-    df['published_at'] = pd.to_datetime(df['publishedAt']).dt.tz_localize('UTC')
+    df['published_at'] = pd.to_datetime(df['publishedAt']).dt.tz_convert('UTC')
     df['source'] = df['source'].apply(lambda x: x['name'])
 
     # Extract relevant columns
