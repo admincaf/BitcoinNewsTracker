@@ -2,22 +2,31 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 from datetime import datetime, timedelta
+import traceback
 
 def create_trend_chart(df: pd.DataFrame) -> go.Figure:
     """
     Create a line chart showing Bitcoin mentions over time
     """
     try:
-        # Convert to UTC for consistent timezone handling
-        df_copy = df.copy()
-        df_copy['published_at'] = df_copy['published_at'].dt.tz_convert('UTC')
+        if df.empty:
+            print("Empty DataFrame provided to create_trend_chart")
+            return go.Figure()
 
-        # Resample data by hour
+        # Ensure we're working with timezone-aware data
+        df_copy = df.copy()
+
+        # Print debug info
+        print("Trend chart input data sample:", df_copy.head(1).to_dict())
+        print("Published_at dtype:", df_copy['published_at'].dtype)
+
+        # Group by hour and count mentions
         mentions_by_time = df_copy.groupby(
-            pd.Grouper(key='published_at', freq='H')
+            pd.Grouper(key='published_at', freq='h')
         ).size().reset_index()
         mentions_by_time.columns = ['timestamp', 'mentions']
 
+        # Create the line chart
         fig = px.line(
             mentions_by_time,
             x='timestamp',
@@ -34,8 +43,7 @@ def create_trend_chart(df: pd.DataFrame) -> go.Figure:
 
         return fig
     except Exception as e:
-        print(f"Error creating trend chart: {str(e)}")
-        # Return an empty figure if there's an error
+        print(f"Error creating trend chart: {str(e)}\n{traceback.format_exc()}")
         return go.Figure()
 
 def create_source_breakdown(df: pd.DataFrame) -> go.Figure:
@@ -43,6 +51,13 @@ def create_source_breakdown(df: pd.DataFrame) -> go.Figure:
     Create a bar chart showing mentions by news source
     """
     try:
+        if df.empty:
+            print("Empty DataFrame provided to create_source_breakdown")
+            return go.Figure()
+
+        # Print debug info
+        print("Source breakdown input data sample:", df.head(1).to_dict())
+
         source_counts = df['source'].value_counts().head(10)
 
         fig = px.bar(
@@ -60,6 +75,5 @@ def create_source_breakdown(df: pd.DataFrame) -> go.Figure:
 
         return fig
     except Exception as e:
-        print(f"Error creating source breakdown: {str(e)}")
-        # Return an empty figure if there's an error
+        print(f"Error creating source breakdown: {str(e)}\n{traceback.format_exc()}")
         return go.Figure()
