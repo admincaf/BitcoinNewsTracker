@@ -5,6 +5,7 @@ from news_fetcher import fetch_news
 from data_processor import process_news_data
 from visualizations import create_trend_chart, create_source_breakdown
 import pytz
+import traceback
 
 # Page config
 st.set_page_config(
@@ -35,48 +36,69 @@ days = range_map[time_range]
 # Fetch and process data
 @st.cache_data(ttl=3600)  # Cache for 1 hour
 def get_processed_data(days):
-    end_date = datetime.now(pytz.UTC)
-    start_date = end_date - timedelta(days=days)
-    news_data = fetch_news(start_date, end_date)
-    return process_news_data(news_data)
+    try:
+        end_date = datetime.now(pytz.UTC)
+        start_date = end_date - timedelta(days=days)
+
+        # Fetch news data
+        news_data = fetch_news(start_date, end_date)
+        if not news_data:
+            raise Exception("No news data returned from API")
+
+        # Process the data
+        df = process_news_data(news_data)
+        if df.empty:
+            raise Exception("No data available after processing")
+
+        return df
+    except Exception as e:
+        st.error(f"Error in data processing: {str(e)}")
+        print(f"Detailed error: {traceback.format_exc()}")
+        return pd.DataFrame()
 
 try:
+    # Get the data
     df = get_processed_data(days)
 
-    # Display metrics
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Total Bitcoin Mentions", len(df))
-    with col2:
-        st.metric("Unique Sources", df['source'].nunique())
-    with col3:
-        recent_cutoff = datetime.now(pytz.UTC) - timedelta(hours=1)
-        recent_mentions = len(df[df['published_at'] >= recent_cutoff])
-        st.metric("Mentions in Last Hour", recent_mentions)
+    if not df.empty:
+        # Display metrics
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Total Bitcoin Mentions", len(df))
+        with col2:
+            st.metric("Unique Sources", df['source'].nunique())
+        with col3:
+            recent_cutoff = datetime.now(pytz.UTC) - timedelta(hours=1)
+            recent_mentions = len(df[df['published_at'] >= recent_cutoff])
+            st.metric("Mentions in Last Hour", recent_mentions)
 
-    # Trend chart
-    st.subheader("📈 Bitcoin Mention Trends")
-    trend_chart = create_trend_chart(df)
-    st.plotly_chart(trend_chart, use_container_width=True)
+        # Trend chart
+        st.subheader("📈 Bitcoin Mention Trends")
+        trend_chart = create_trend_chart(df)
+        st.plotly_chart(trend_chart, use_container_width=True)
 
-    # Source breakdown
-    st.subheader("📰 Mentions by News Source")
-    source_chart = create_source_breakdown(df)
-    st.plotly_chart(source_chart, use_container_width=True)
+        # Source breakdown
+        st.subheader("📰 Mentions by News Source")
+        source_chart = create_source_breakdown(df)
+        st.plotly_chart(source_chart, use_container_width=True)
 
-    # Recent mentions table
-    st.subheader("📑 Recent Mentions")
-    recent_df = df.head(10)[['title', 'source', 'published_at', 'url']]
-    st.dataframe(
-        recent_df.style.format({'published_at': lambda x: x.strftime('%Y-%m-%d %H:%M')}),
-        column_config={
-            "url": st.column_config.LinkColumn("Article Link")
-        },
-        hide_index=True
-    )
+        # Recent mentions table
+        st.subheader("📑 Recent Mentions")
+        if not df.empty:
+            recent_df = df.head(10)[['title', 'source', 'published_at', 'url']]
+            st.dataframe(
+                recent_df.style.format({'published_at': lambda x: x.strftime('%Y-%m-%d %H:%M')}),
+                column_config={
+                    "url": st.column_config.LinkColumn("Article Link")
+                },
+                hide_index=True
+            )
+    else:
+        st.warning("No data available. Please try again later.")
 
 except Exception as e:
-    st.error(f"Error fetching or processing data: {str(e)}")
+    st.error(f"Error loading dashboard: {str(e)}")
+    print(f"Detailed error: {traceback.format_exc()}")
 
 # Footer
 st.markdown("---")
