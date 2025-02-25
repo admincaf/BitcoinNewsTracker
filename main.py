@@ -37,28 +37,37 @@ days = range_map[time_range]
 @st.cache_data(ttl=3600)  # Cache for 1 hour
 def get_processed_data(days):
     try:
+        # Calculate date range
         end_date = datetime.now(pytz.UTC)
         start_date = end_date - timedelta(days=days)
+
+        # Debug timestamp info
+        print(f"Date range: {start_date} to {end_date}")
 
         # Fetch news data
         news_data = fetch_news(start_date, end_date)
         if not news_data:
-            raise Exception("No news data returned from API")
+            st.error("No news data available. Please try again later.")
+            return pd.DataFrame()
 
         # Process the data
         df = process_news_data(news_data)
         if df.empty:
-            raise Exception("No data available after processing")
+            st.error("Could not process news data. Please try again later.")
+            return df
 
+        print(f"Successfully processed {len(df)} articles")
         return df
+
     except Exception as e:
-        st.error(f"Error in data processing: {str(e)}")
+        st.error(f"Error fetching data: {str(e)}")
         print(f"Detailed error: {traceback.format_exc()}")
         return pd.DataFrame()
 
 try:
-    # Get the data
-    df = get_processed_data(days)
+    # Loading state
+    with st.spinner('Fetching Bitcoin news data...'):
+        df = get_processed_data(days)
 
     if not df.empty:
         # Display metrics
@@ -84,21 +93,21 @@ try:
 
         # Recent mentions table
         st.subheader("📑 Recent Mentions")
-        if not df.empty:
-            recent_df = df.head(10)[['title', 'source', 'published_at', 'url']]
-            st.dataframe(
-                recent_df.style.format({'published_at': lambda x: x.strftime('%Y-%m-%d %H:%M')}),
-                column_config={
-                    "url": st.column_config.LinkColumn("Article Link")
-                },
-                hide_index=True
-            )
+        recent_df = df.head(10)[['title', 'source', 'published_at', 'url']]
+        st.dataframe(
+            recent_df.style.format({'published_at': lambda x: x.strftime('%Y-%m-%d %H:%M UTC')}),
+            column_config={
+                "url": st.column_config.LinkColumn("Article Link")
+            },
+            hide_index=True
+        )
     else:
-        st.warning("No data available. Please try again later.")
+        st.warning("No data available. Please check your internet connection and try again.")
 
 except Exception as e:
-    st.error(f"Error loading dashboard: {str(e)}")
-    print(f"Detailed error: {traceback.format_exc()}")
+    st.error("An error occurred while loading the dashboard")
+    print(f"Dashboard error: {str(e)}")
+    print(f"Traceback: {traceback.format_exc()}")
 
 # Footer
 st.markdown("---")
