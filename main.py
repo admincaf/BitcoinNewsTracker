@@ -14,6 +14,15 @@ st.set_page_config(
     layout="wide"
 )
 
+# Error handling wrapper
+def handle_errors(func):
+    try:
+        return func()
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
+        print(f"Detailed error: {traceback.format_exc()}")
+        return None
+
 # Title and description
 st.title("🔍 Bitcoin News Tracker")
 st.markdown("""
@@ -65,7 +74,9 @@ def get_processed_data(days):
         print(f"Detailed error: {traceback.format_exc()}")
         return pd.DataFrame()
 
-try:
+# Main application logic wrapped in error handler
+@handle_errors
+def run_app():
     # Loading state
     with st.spinner('Fetching Bitcoin news data...'):
         df = get_processed_data(days)
@@ -126,10 +137,7 @@ try:
     else:
         st.warning("No data available. Please check your internet connection and try again.")
 
-except Exception as e:
-    st.error("An error occurred while loading the dashboard")
-    print(f"Dashboard error: {str(e)}")
-    print(f"Traceback: {traceback.format_exc()}")
+run_app()
 
 # Footer
 st.markdown("---")
