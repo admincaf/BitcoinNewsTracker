@@ -6,7 +6,7 @@ import traceback
 
 def create_trend_chart(df: pd.DataFrame) -> go.Figure:
     """
-    Create a line chart showing Bitcoin mentions over time
+    Create a line chart showing Bitcoin mentions over time (hourly)
     """
     try:
         if df.empty:
@@ -46,7 +46,7 @@ def create_trend_chart(df: pd.DataFrame) -> go.Figure:
             plot_df,
             x='timestamp',
             y='mentions',
-            title='Bitcoin Mentions Over Time'
+            title='Bitcoin Mentions Over Time (Hourly)'
         )
 
         # Update layout
@@ -65,6 +65,69 @@ def create_trend_chart(df: pd.DataFrame) -> go.Figure:
 
     except Exception as e:
         print(f"Error creating trend chart: {str(e)}")
+        print(f"Traceback: {traceback.format_exc()}")
+        return go.Figure()
+
+def create_daily_trend_chart(df: pd.DataFrame) -> go.Figure:
+    """
+    Create a bar chart showing Bitcoin mentions by day
+    """
+    try:
+        if df.empty:
+            print("Empty DataFrame provided to create_daily_trend_chart")
+            return go.Figure()
+
+        # Ensure we have the right columns
+        if 'published_at' not in df.columns:
+            print("Missing 'published_at' column")
+            return go.Figure()
+
+        # Create a copy for manipulation
+        df_copy = df.copy()
+
+        # Ensure datetime is timezone-aware
+        if df_copy['published_at'].dt.tz is None:
+            df_copy['published_at'] = df_copy['published_at'].dt.tz_localize('UTC')
+
+        # Create daily bins
+        daily_mentions = df_copy.groupby(
+            df_copy['published_at'].dt.date
+        ).size().reset_index()
+        daily_mentions.columns = ['date', 'mentions']
+
+        # Create the bar chart
+        fig = px.bar(
+            daily_mentions,
+            x='date',
+            y='mentions',
+            title='Bitcoin Mentions by Day',
+            labels={'date': 'Date', 'mentions': 'Number of Mentions'}
+        )
+
+        # Update layout
+        fig.update_layout(
+            xaxis_title="Date",
+            yaxis_title="Number of Mentions",
+            hovermode='x unified',
+            showlegend=False,
+            xaxis=dict(
+                tickangle=45,
+                tickformat="%Y-%m-%d"
+            ),
+            bargap=0.2
+        )
+
+        # Update bar appearance
+        fig.update_traces(
+            marker_color='rgb(55, 83, 109)',
+            marker_line_color='rgb(8,48,107)',
+            marker_line_width=1.5
+        )
+
+        return fig
+
+    except Exception as e:
+        print(f"Error creating daily trend chart: {str(e)}")
         print(f"Traceback: {traceback.format_exc()}")
         return go.Figure()
 

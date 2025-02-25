@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 from news_fetcher import fetch_news
 from data_processor import process_news_data
-from visualizations import create_trend_chart, create_source_breakdown
+from visualizations import create_trend_chart, create_daily_trend_chart, create_source_breakdown
 import pytz
 import traceback
 
@@ -97,10 +97,16 @@ try:
                 print(f"Error calculating recent mentions: {str(e)}")
                 st.metric("Mentions in Last Hour", "N/A")
 
-        # Trend chart
+        # Trend charts
         st.subheader("📈 Bitcoin Mention Trends")
+
+        # Hourly trend
         trend_chart = create_trend_chart(df)
         st.plotly_chart(trend_chart, use_container_width=True)
+
+        # Daily trend
+        daily_chart = create_daily_trend_chart(df)
+        st.plotly_chart(daily_chart, use_container_width=True)
 
         # Source breakdown
         st.subheader("📰 Mentions by News Source")
