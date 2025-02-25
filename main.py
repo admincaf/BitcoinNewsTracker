@@ -37,12 +37,12 @@ days = range_map[time_range]
 @st.cache_data(ttl=3600)  # Cache for 1 hour
 def get_processed_data(days):
     try:
-        # Calculate date range
-        end_date = datetime.now(pytz.UTC)
+        # Calculate date range with explicit UTC timezone
+        current_time = datetime.now(pytz.UTC)
+        end_date = current_time
         start_date = end_date - timedelta(days=days)
 
-        # Debug timestamp info
-        print(f"Date range: {start_date} to {end_date}")
+        print(f"Fetching data from {start_date} to {end_date}")
 
         # Fetch news data
         news_data = fetch_news(start_date, end_date)
@@ -57,6 +57,7 @@ def get_processed_data(days):
             return df
 
         print(f"Successfully processed {len(df)} articles")
+        print(f"DataFrame dtypes: {df.dtypes}")
         return df
 
     except Exception as e:
@@ -72,13 +73,18 @@ try:
     if not df.empty:
         # Display metrics
         col1, col2, col3 = st.columns(3)
+
         with col1:
             st.metric("Total Bitcoin Mentions", len(df))
+
         with col2:
             st.metric("Unique Sources", df['source'].nunique())
+
         with col3:
-            recent_cutoff = datetime.now(pytz.UTC) - timedelta(hours=1)
-            recent_mentions = len(df[df['published_at'] >= recent_cutoff])
+            # Ensure timezone-aware comparison
+            current_time = datetime.now(pytz.UTC)
+            one_hour_ago = current_time - timedelta(hours=1)
+            recent_mentions = len(df[df['published_at'] >= one_hour_ago])
             st.metric("Mentions in Last Hour", recent_mentions)
 
         # Trend chart
