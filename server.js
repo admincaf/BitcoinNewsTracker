@@ -4,7 +4,7 @@ const moment = require('moment');
 require('dotenv').config();
 
 const app = express();
-const port = 3000;
+const port = 8080;
 
 // Middleware
 app.use(express.json());
