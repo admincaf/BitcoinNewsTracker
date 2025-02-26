@@ -1,52 +1,86 @@
-# Bitcoin News Tracker
+# BitcoinNewsTracker
 
-A real-time dashboard that tracks and visualizes Bitcoin mentions across major news sources.
+A real-time Bitcoin news tracking application that aggregates and visualizes mentions of Bitcoin across major news sources.
 
 ## Features
-- Real-time news tracking
-- Interactive data visualization
-- Multiple time range options (24 hours, 7 days, 30 days)
-- Source breakdown analysis
 
-## Setup
+- Real-time tracking of Bitcoin mentions in news articles
+- Visual representation of mention frequency (hourly and daily)
+- Statistics on total mentions, unique sources, and recent activity
+- Configurable time period selection
+- Clean and responsive user interface
 
-1. Install dependencies:
-```bash
-npm install
-```
+## Prerequisites
 
-2. Create a `.env` file in the root directory and add your NewsAPI key:
-```
-NEWS_API_KEY=your_api_key_here
-```
+- Node.js (v14 or higher)
+- NPM (Node Package Manager)
+- News API Key (from [newsapi.org](https://newsapi.org))
 
-3. Start the server:
-```bash
-node server.js
-```
+## Installation
 
-The application will be available at `http://localhost:5000`
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/admincaf/BitcoinNewsTracker.git
+   cd BitcoinNewsTracker
+   ```
 
-## Project Structure
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-```
-├── server.js           # Node.js backend server
-├── package.json        # Project dependencies
-├── .env               # Environment variables
-└── public/            # Frontend assets
-    ├── index.html     # Main HTML page
-    ├── styles.css     # CSS styles
-    └── app.js         # Frontend JavaScript
-```
+3. Create a `.env` file in the root directory and add your News API key:
+   ```
+   NEWS_API_KEY=your_api_key_here
+   ```
+
+## Usage
+
+1. Start the server:
+   ```bash
+   node server.js
+   ```
+
+2. Open your browser and navigate to:
+   ```
+   http://localhost:3000
+   ```
+
+3. Use the time period selector to view Bitcoin news mentions for different durations.
 
 ## API Endpoints
 
-- GET `/api/news?days=1`: Fetch Bitcoin news for the specified number of days
+### GET /api/news
+Fetches Bitcoin news articles for a specified time period.
 
-## Dependencies
+Query Parameters:
+- `days` (optional): Number of days to fetch news for (default: 1)
 
-- Express.js: Web server framework
-- Axios: HTTP client
-- Chart.js: Data visualization
-- Moment.js: Date handling
-- dotenv: Environment variable management
+Response Format:
+```json
+{
+  "total": number,
+  "uniqueSources": number,
+  "recentMentions": number,
+  "articles": [
+    {
+      "title": string,
+      "description": string,
+      "source": string,
+      "publishedAt": string,
+      "url": string
+    }
+  ]
+}
+```
+
+## Tech Stack
+
+- Frontend: HTML, CSS, JavaScript, Chart.js
+- Backend: Node.js, Express
+- APIs: News API
+- Data Visualization: Chart.js
+
+## License
+
+ISC
