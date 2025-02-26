@@ -12,7 +12,7 @@ A real-time dashboard that tracks and visualizes Bitcoin mentions across major n
 
 1. Install dependencies:
 ```bash
-npm install express axios chart.js moment dotenv
+npm install
 ```
 
 2. Create a `.env` file in the root directory and add your NewsAPI key:
