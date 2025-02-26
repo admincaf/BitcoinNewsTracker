@@ -69,6 +69,7 @@ select {
 
 .charts {
     display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 2rem;
     margin-bottom: 2rem;
 }
@@ -78,6 +79,39 @@ select {
     padding: 1.5rem;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    min-height: 400px;
+    position: relative;
+}
+
+/* Make the sources chart full width */
+.chart-container:last-child {
+    grid-column: 1 / -1;
+    min-height: 500px;
+}
+
+/* Ensure canvas takes full height of container */
+.chart-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 2rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+    .charts {
+        grid-template-columns: 1fr;
+    }
+    
+    .chart-container {
+        min-height: 350px;
+    }
+    
+    .chart-container:last-child {
+        min-height: 400px;
+    }
 }
 
 .chart-container h2 {
