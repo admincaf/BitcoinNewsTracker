@@ -88,10 +88,43 @@ function updateCharts(data) {
     const { hourlyData, dailyData, sourceData } = processChartData(data.articles);
 
     // Update hourly chart
-    hourlyChart.data.labels = Object.keys(hourlyData).map(hour => 
-        moment(hour).format('MM/DD HH:mm')
-    );
-    hourlyChart.data.datasets[0].data = Object.values(hourlyData);
+    const sortedHourlyData = Object.entries(hourlyData)
+        .sort(([timeA], [timeB]) => moment(timeA).diff(moment(timeB)))
+        .reduce((acc, [time, count]) => {
+            acc.labels.push(moment(time).format('MM/DD HH:mm'));
+            acc.counts.push(count);
+            return acc;
+        }, { labels: [], counts: [] });
+
+    hourlyChart.data.labels = sortedHourlyData.labels;
+    hourlyChart.data.datasets[0].data = sortedHourlyData.counts;
+    hourlyChart.options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            x: {
+                type: 'category',
+                display: true,
+                title: {
+                    display: true,
+                    text: 'Time (UTC)'
+                }
+            },
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Number of Mentions'
+                }
+            }
+        },
+        plugins: {
+            tooltip: {
+                mode: 'index',
+                intersect: false
+            }
+        }
+    };
     hourlyChart.update();
 
     // Update daily chart
